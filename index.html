@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="he">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>אתר בית ספרי</title>
+<style>
+  body { font-family: Arial, sans-serif; background: #f0f4f8; margin: 0; padding: 0; direction: rtl; }
+  header { background: #005f73; color: white; padding: 20px; text-align: center; }
+  main, #signupSection, #loginSection { max-width: 600px; margin: 20px auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+  input[type=text], input[type=password], textarea {
+    width: 100%; padding: 12px; margin: 8px 0 18px 0; box-sizing: border-box;
+    border-radius: 6px; border: 1px solid #ccc; font-size: 16px;
+    font-family: monospace;
+  }
+  textarea { height: 180px; resize: vertical; white-space: pre-wrap; }
+  button { background: #008891; color: white; border: none; padding: 14px 30px; border-radius: 8px; cursor: pointer; font-size: 18px; }
+  button:hover { background: #005f73; }
+  .hidden { display: none; }
+  h2 { color: #005f73; font-size: 26px; }
+  .code-list, .questions-list { background: #e0f2f1; padding: 12px; border-radius: 6px; max-height: 300px; overflow-y: auto; font-family: monospace; font-size: 16px; white-space: pre-wrap; margin-top: 12px; }
+  .item { margin-bottom: 18px; padding: 14px; background: white; border-radius: 6px; box-shadow: 0 0 5px rgba(0,0,0,0.1); position: relative; white-space: pre-wrap; font-size: 16px; }
+  .delete-btn { position: absolute; top: 14px; left: 14px; background: #d9534f; font-weight: bold; border-radius: 6px; border: none; padding: 6px 12px; cursor: pointer; font-size: 16px; }
+  .delete-btn:hover { background: #c9302c; }
+  label { font-weight: bold; display: block; margin-top: 14px; font-size: 18px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>אתר בית ספרי</h1>
+</header>
+
+<!-- Signup Section -->
+<div id="signupSection">
+  <h2>הרשמה</h2>
+  <label>שם משתמש:</label>
+  <input type="text" id="signupUsername" />
+  <label>סיסמה:</label>
+  <input type="password" id="signupPassword" />
+  <label>אשר סיסמה:</label>
+  <input type="password" id="signupPasswordConfirm" />
+  <button onclick="signup()">הרשם</button>
+  <p>כבר רשום? <a href="#" onclick="showLogin();return false;">התחבר</a></p>
+</div>
+
+<!-- Login Section -->
+<div id="loginSection" class="hidden">
+  <h2>התחברות</h2>
+  <label>שם משתמש:</label>
+  <input type="text" id="loginUsername" />
+  <label>סיסמה:</label>
+  <input type="password" id="loginPassword" />
+  <button onclick="login()">התחבר</button>
+  <p>אין לך חשבון? <a href="#" onclick="showSignup();return false;">הרשם</a></p>
+</div>
+
+<!-- Main Content -->
+<main id="mainContent" class="hidden">
+  <p style="font-size:18px;">מחובר בשם: <span id="currentUser"></span> <button onclick="logout()" style="background:#d9534f; margin-left:10px; font-size:16px; padding:8px 16px;">התנתק</button></p>
+
+  <section>
+    <h2>הכנסת קוד Java / HTML</h2>
+    <label for="exerciseInput">איזה תרגיל זה:</label>
+    <input type="text" id="exerciseInput" placeholder="תיאור קצר של התרגיל" />
+    <label for="codeInput">הכנס קוד:</label>
+    <textarea id="codeInput" placeholder="כתוב כאן קוד Java או HTML"></textarea>
+    <button onclick="saveCode()">שמור קוד</button>
+    <div class="code-list" id="codeList"></div>
+  </section>
+
+  <section>
+    <h2>שאלות ותשובות</h2>
+    <label for="questionInput">שאלה:</label>
+    <input type="text" id="questionInput" placeholder="כתוב כאן שאלה" />
+    <button onclick="addQuestion()">הוסף שאלה</button>
+    <div class="questions-list" id="questionsList"></div>
+  </section>
+</main>
+
+<script>
+  let currentUser = null;
+
+  // בדיקה אם משתמש מחובר מ-localStorage
+  window.onload = function() {
+    const savedUser = localStorage.getItem('loggedInUser');
+    if (savedUser) {
+      currentUser = savedUser;
+      document.getElementById('currentUser').textContent = currentUser;
+      document.getElementById('loginSection').classList.add('hidden');
+      document.getElementById('signupSection').classList.add('hidden');
+      document.getElementById('mainContent').classList.remove('hidden');
+      renderCodes();
+      renderQuestions();
+    } else {
+      showSignup();
+    }
+  };
+
+  function showSignup() {
+    document.getElementById('signupSection').classList.remove('hidden');
+    document.getElementById('loginSection').classList.add('hidden');
+    document.getElementById('mainContent').classList.add('hidden');
+  }
+  function showLogin() {
+    document.getElementById('loginSection').classList.remove('hidden');
+    document.getElementById('signupSection').classList.add('hidden');
+    document.getElementById('mainContent').classList.add('hidden');
+  }
+
+  function getUsers() {
+    return JSON.parse(localStorage.getItem('users') || '[]');
+  }
+  function saveUsers(users) {
+    localStorage.setItem('users', JSON.stringify(users));
+  }
+
+  function signup() {
+    let username = document.getElementById('signupUsername').value.trim();
+    let password = document.getElementById('signupPassword').value;
+    let passwordConfirm = document.getElementById('signupPasswordConfirm').value;
+    if (!username || !password || !passwordConfirm) {
+      alert('אנא מלא/י את כל השדות');
+      return;
+    }
+    if (password !== passwordConfirm) {
+      alert('הסיסמאות לא תואמות');
+      return;
+    }
+    let users = getUsers();
+    if (users.some(u => u.username === username)) {
+      alert('שם המשתמש כבר קיים');
+      return;
+    }
+    users.push({username, password});
+    saveUsers(users);
+    alert('ההרשמה הצליחה! כעת תוכל להתחבר.');
+    showLogin();
+  }
+
+  function login() {
+    let username = document.getElementById('loginUsername').value.trim();
+    let password = document.getElementById('loginPassword').value;
+    if (!username || !password) {
+      alert('אנא מלא/י את כל השדות');
+      return;
+    }
+    let users = getUsers();
+    let user = users.find(u => u.username === username && u.password === password);
+    if (!user) {
+      alert('שם משתמש או סיסמה שגויים');
+      return;
+    }
+    currentUser = username;
+    localStorage.setItem('loggedInUser', currentUser);
+    document.getElementById('currentUser').textContent = currentUser;
+    document.getElementById('loginSection').classList.add('hidden');
+    document.getElementById('signupSection').classList.add('hidden');
+    document.getElementById('mainContent').classList.remove('hidden');
+    clearLoginInputs();
+    renderCodes();
+    renderQuestions();
+  }
+
+  function logout() {
+    currentUser = null;
+    localStorage.removeItem('loggedInUser');
+    document.getElementById('mainContent').classList.add('hidden');
+    showLogin();
+  }
+
+  function clearLoginInputs() {
+    document.getElementById('loginUsername').value = '';
+    document.getElementById('loginPassword').value = '';
+  }
+
+  function saveCode() {
+    if (!currentUser) {
+      alert('אנא התחבר קודם');
+      return;
+    }
+    let exercise = document.getElementById('exerciseInput').value.trim();
+    let code = document.getElementById('codeInput').value;
+    if (!code.trim()) {
+      alert('אנא הכנס קוד לפני שמירה');
+      return;
+    }
+    let codes = JSON.parse(localStorage.getItem('savedCodes') || '[]');
+    codes.push({ id: Date.now(), exercise, code, owner: currentUser });
+    localStorage.setItem('savedCodes', JSON.stringify(codes));
+    document.getElementById('exerciseInput').value = '';
+    document.getElementById('codeInput').value = '';
+    renderCodes();
+  }
+
+  function renderCodes() {
+    let codeList = document.getElementById('codeList');
+    let codes = JSON.parse(localStorage.getItem('savedCodes') || '[]');
+    if (!codes.length) {
+      codeList.innerHTML = '<p>אין קודים שמורים</p>';
+      return;
+    }
+    codeList.innerHTML = '';
+    codes.forEach(item => {
+      let div = document.createElement('div');
+      div.className = 'item';
+      let text = item.exercise ? `תרגיל: ${item.exercise}\n` : '';
+      text += `(${item.owner})\n${item.code}`;
+      div.textContent = text;
+      let delBtn = document.createElement('button');
+      delBtn.textContent = 'מחק';
+      delBtn.className = 'delete-btn';
+      delBtn.onclick = function() {
+        let filtered = codes.filter(c => c.id !== item.id);
+        localStorage.setItem('savedCodes', JSON.stringify(filtered));
+        renderCodes();
+      };
+      div.appendChild(delBtn);
+      codeList.appendChild(div);
+    });
+  }
+
+  function addQuestion() {
+    if (!currentUser) {
+      alert('אנא התחבר קודם');
+      return;
+    }
+    let question = document.getElementById('questionInput').value.trim();
+    if (!question) {
+      alert('אנא הכנס שאלה לפני הוספה');
+      return;
+    }
+    let questions = JSON.parse(localStorage.getItem('questions') || '[]');
+    questions.push({ id: Date.now(), question, owner: currentUser, answer: '' });
+    localStorage.setItem('questions', JSON.stringify(questions));
+    document.getElementById('questionInput').value = '';
+    renderQuestions();
+  }
+
+  function renderQuestions() {
+    let questionsList = document.getElementById('questionsList');
+    let questions = JSON.parse(localStorage.getItem('questions') || '[]');
+    if (!questions.length) {
+      questionsList.innerHTML = '<p>אין שאלות</p>';
+      return;
+    }
+    questionsList.innerHTML = '';
+    questions.forEach(item => {
+      let div = document.createElement('div');
+      div.className = 'item question-item';
+      let questionText = document.createElement('b');
+      questionText.textContent = item.question;
+      div.appendChild(questionText);
+      let answerText = document.createElement('div');
+      answerText.className = 'answer';
+      answerText.textContent = item.answer || '(אין תשובה)';
+      div.appendChild(answerText);
+      let answerInput = document.createElement('input');
+      answerInput.type = 'text';
+      answerInput.placeholder = 'כתוב תשובה כאן...';
+      answerInput.style.width = '100%';
+      answerInput.style.marginTop = '6px';
+      answerInput.onchange = function() {
+        item.answer = this.value;
+        localStorage.setItem('questions', JSON.stringify(questions));
+        renderQuestions();
+      };
+      div.appendChild(answerInput);
+      let delBtn = document.createElement('button');
+      delBtn.textContent = 'מחק';
+      delBtn.className = 'delete-btn';
+      delBtn.onclick = function() {
+        let filtered = questions.filter(q => q.id !== item.id);
+        localStorage.setItem('questions', JSON.stringify(filtered));
+        renderQuestions();
+      };
+      div.appendChild(delBtn);
+      questionsList.appendChild(div);
+    });
+  }
+</script>
+</body>
+</html>
