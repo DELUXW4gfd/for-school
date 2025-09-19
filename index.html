@@ -5,8 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>אתר בית ספרי</title>
 <style>
-  body { font-family: Arial, sans-serif; background: #f0f4f8; margin: 0; padding: 0; direction: rtl; }
-  header { background: #005f73; color: white; padding: 20px; text-align: center; }
+  body { font-family: Arial, sans-serif; background: #292929; margin: 0; padding: 0; direction: rtl; }
+  header { background: #89cbcb; color: white; padding: 20px; text-align: center; }
   main, #signupSection, #loginSection { max-width: 600px; margin: 20px auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
   input[type=text], input[type=password], textarea {
     width: 100%; padding: 12px; margin: 8px 0 18px 0; box-sizing: border-box;
@@ -14,8 +14,9 @@
     font-family: monospace;
   }
   textarea { height: 180px; resize: vertical; white-space: pre-wrap; }
-  button { background: #008891; color: white; border: none; padding: 14px 30px; border-radius: 8px; cursor: pointer; font-size: 18px; }
-  button:hover { background: #005f73; }
+  button { background: #404040; color: white; border: none; padding: 14px 30px; border-radius: 8px; cursor: pointer; font-size: 18px; }
+  button:hover { transition: 0.5s;
+     background: #005f73; }
   .hidden { display: none; }
   h2 { color: #005f73; font-size: 26px; }
   .code-list, .questions-list { background: #e0f2f1; padding: 12px; border-radius: 6px; max-height: 300px; overflow-y: auto; font-family: monospace; font-size: 16px; white-space: pre-wrap; margin-top: 12px; }
@@ -23,6 +24,7 @@
   .delete-btn { position: absolute; top: 14px; left: 14px; background: #d9534f; font-weight: bold; border-radius: 6px; border: none; padding: 6px 12px; cursor: pointer; font-size: 16px; }
   .delete-btn:hover { background: #c9302c; }
   label { font-weight: bold; display: block; margin-top: 14px; font-size: 18px; }
+
 </style>
 </head>
 <body>
@@ -203,8 +205,10 @@
     codes.forEach(item => {
       let div = document.createElement('div');
       div.className = 'item';
-      let text = item.exercise ? `תרגיל: ${item.exercise}\n` : '';
-      text += `(${item.owner})\n${item.code}`;
+      let text = item.exercise ? `תרגיל: ${item.exercise}
+` : '';
+      text += `(${item.owner})
+${item.code}`;
       div.textContent = text;
       let delBtn = document.createElement('button');
       delBtn.textContent = 'מחק';
